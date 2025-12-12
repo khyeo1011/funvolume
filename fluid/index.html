@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Viscous Fluid Volume</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f7f1e3; font-family: sans-serif; }
+        .glass {
+            width: 150px; height: 300px; border: 4px solid #2c3e50; border-top: none; border-radius: 0 0 20px 20px;
+            position: relative; overflow: hidden; background: rgba(255,255,255,0.5); margin-bottom: 20px;
+        }
+        .liquid {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
+            background: #f39c12; transition: height 0.1s linear;
+        }
+        .wave {
+            position: absolute; top: -10px; left: 0; width: 200%; height: 20px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="%23f39c12"></path></svg>');
+            background-size: 50% 100%;
+            animation: wave 1s linear infinite;
+            opacity: 0; /* Hidden when empty */
+        }
+        @keyframes wave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        
+        button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; background: #2c3e50; color: white; border: none; border-radius: 5px; user-select: none; }
+        button:active { background: #34495e; }
+        #readout { font-size: 2rem; font-weight: bold; color: #2c3e50; height: 40px; }
+    </style>
+</head>
+<body>
+    <div id="readout">0%</div>
+    <div class="glass">
+        <div class="liquid" id="liquid">
+            <div class="wave" id="wave"></div>
+        </div>
+    </div>
+    <button id="pourBtn">HOLD TO POUR</button>
+
+    <script>
+        const liquid = document.getElementById('liquid');
+        const wave = document.getElementById('wave');
+        const readout = document.getElementById('readout');
+        const btn = document.getElementById('pourBtn');
+
+        let fillLevel = 0;
+        let isPouring = false;
+        let timer = 0;
+        let turbulence = 0;
+        let animationFrame;
+
+        btn.addEventListener('mousedown', () => {
+            isPouring = true;
+            fillLevel = 0;
+            timer = 0
+        });
+        btn.addEventListener('mouseup', () => isPouring = false);
+        btn.addEventListener('mouseleave', () => isPouring = false);
+
+        // Touch support
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); isPouring = true; });
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); isPouring = false; });
+
+        function loop() {
+            // Filling logic
+            if (isPouring && fillLevel < 100 && timer > 30) {
+                fillLevel += 0.5; // Slow fill
+                turbulence = 10; // High turbulence while pouring
+                wave.style.opacity = 1;
+            } else if( isPouring && timer > 30){
+                fillLevel -= 50;
+            } 
+            else {
+                // Settling logic
+                if (turbulence > 0) {
+                    turbulence -= 0.1; // Decay
+                } else {
+                    turbulence = 0;
+                }
+            }
+            
+            // Apply visual height
+            liquid.style.height = `${fillLevel}%`;
+
+            // Calculate displayed volume (fluctuates based on turbulence)
+            if (fillLevel > 0) {
+                const noise = (Math.random() - 0.5) * turbulence;
+                let displayVol = Math.round(fillLevel + noise);
+                displayVol = Math.max(0, Math.min(100, displayVol));
+                
+                if (turbulence > 0.5) {
+                    readout.innerText = "~" + displayVol + "%";
+                    readout.style.color = "#e67e22";
+                } else {
+                    readout.innerText = Math.round(fillLevel) + "%";
+                    readout.style.color = "#2c3e50";
+                }
+            }
+
+            // Wave speed adjustment
+            if(turbulence > 0) {
+                wave.style.animationDuration = (1.1 - (turbulence/15)) + "s";
+            }
+            timer += 1;
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</body>
+</html>
