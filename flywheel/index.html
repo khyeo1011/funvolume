@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flywheel Volume</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #34495e; color: white; font-family: monospace; overflow: hidden; }
+        .wheel-container { position: relative; width: 300px; height: 300px; margin: 20px; }
+        .wheel {
+            width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#95a5a6 0% 25%, #7f8c8d 25% 50%, #95a5a6 50% 75%, #7f8c8d 75% 100%);
+            border: 10px solid #2c3e50; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+        }
+        h1 { font-size: 3rem; margin: 0; }
+        p { color: #bdc3c7; }
+    </style>
+</head>
+<body>
+    <h1><span id="vol">0</span>%</h1>
+    <p>Swipe to spin. Keep momentum up!</p>
+    
+    <div class="wheel-container">
+        <div class="wheel" id="wheel">
+        </div>
+    </div>
+
+    <script>
+        const wheel = document.getElementById('wheel');
+        const volDisplay = document.getElementById('vol');
+
+        let rotation = 0;
+        let velocity = 0;
+        let isDragging = false;
+        let lastAngle = 0;
+        let lastTime = 0;
+
+        // Get angle from center of wheel to mouse
+        function getAngle(e) {
+            const rect = wheel.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const x = e.clientX - cx;
+            const y = e.clientY - cy;
+            return Math.atan2(y, x);
+        }
+
+        document.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastAngle = getAngle(e);
+            lastTime = Date.now();
+        });
+
+        const MAX_VELOCITY = 2; // pick your limit
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const currentAngle = getAngle(e);
+
+            let delta = currentAngle - lastAngle;
+            if (delta > Math.PI) delta -= Math.PI * 2;
+            if (delta < -Math.PI) delta += Math.PI * 2;
+
+            velocity += delta;
+
+            lastAngle = currentAngle;
+        });
+
+
+        document.addEventListener('mouseup', () => isDragging = false);
+
+        function loop() {
+            velocity *= 0.99; 
+            rotation += velocity * 0.05;
+            wheel.style.transform = `rotate(${rotation}rad)`;
+
+            // Volume is based on absolute speed
+            let vol = Math.min(100, Math.floor(Math.abs(velocity) * 5));
+            volDisplay.innerText = vol;
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</body>
+</html>
