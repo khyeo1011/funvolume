@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Machine - Volume Control</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #2f3542;
+            color: white;
+        }
+        .machine {
+            background: #dfe4ea;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            border: 5px solid #ffa502;
+        }
+        .window {
+            background: white;
+            color: black;
+            font-size: 5rem;
+            width: 200px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            border: 3px solid #57606f;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 5px #b33939;
+        }
+        button:active {
+            box-shadow: 0 2px #b33939;
+            transform: translateY(3px);
+        }
+        .status { margin-top: 1rem; color: #2f3542; }
+    </style>
+</head>
+<body>
+
+    <div class="machine">
+        <div class="window" id="display">0</div>
+        <button id="actionBtn">START</button>
+        <div class="status" id="statusMsg">Current Volume</div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        const btn = document.getElementById('actionBtn');
+        const statusMsg = document.getElementById('statusMsg');
+        
+        let isSpinning = false;
+        let intervalId = null;
+        let currentVolume = 0;
+
+        btn.addEventListener('click', () => {
+            if (!isSpinning) {
+                // Start Spinning
+                isSpinning = true;
+                btn.innerText = "STOP!";
+                btn.style.background = "#2ed573";
+                btn.style.boxShadow = "0 5px #218c74";
+                statusMsg.innerText = "Good luck...";
+                
+                intervalId = setInterval(() => {
+                    currentVolume = Math.floor(Math.random() * 101);
+                    display.innerText = currentVolume;
+                }, 50); // Updates every 50ms (very fast)
+            } else {
+                // Stop Spinning
+                isSpinning = false;
+                clearInterval(intervalId);
+                btn.innerText = "SPIN AGAIN";
+                btn.style.background = "#ff4757";
+                btn.style.boxShadow = "0 5px #b33939";
+                
+                if (currentVolume > 90) {
+                    statusMsg.innerText = "RIP Headphone users.";
+                } else if (currentVolume < 10) {
+                    statusMsg.innerText = "I can't hear you.";
+                } else {
+                    statusMsg.innerText = "Volume Set.";
+                }
+            }
+        });
+    </script>
+</body>
+</html>

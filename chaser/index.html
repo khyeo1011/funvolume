@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Chaser - Volume Control</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            overflow: hidden; /* Prevent scrollbars when button moves */
+        }
+        .container {
+            width: 80%;
+            height: 50px;
+            background: #ddd;
+            border-radius: 25px;
+            position: relative;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        #handle {
+            width: 50px;
+            height: 50px;
+            background: #ff4757;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 0; /* Starting volume 0 */
+            cursor: pointer;
+            transition: left 0.1s ease-out; /* Smooth movement */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            user-select: none;
+        }
+        h1 { margin-bottom: 2rem; }
+    </style>
+</head>
+<body>
+    <h1>The slider is scared from the cursor!</h1>
+    <h1>Volume: <span id="vol-display">0</span>%</h1>
+    
+    <div class="container" id="track">
+        <div id="handle">|||</div>
+    </div>
+
+    <script>
+        const handle = document.getElementById('handle');
+        const track = document.getElementById('track');
+        const display = document.getElementById('vol-display');
+
+        // The "Fear" radius. If mouse is within 100px, it moves.
+        const FEAR_RADIUS = 100; 
+
+        document.addEventListener('mousemove', (e) => {
+            const handleRect = handle.getBoundingClientRect();
+            const handleCenterX = handleRect.left + handleRect.width / 2;
+            const handleCenterY = handleRect.top + handleRect.height / 2;
+
+            const dist = Math.hypot(e.clientX - handleCenterX, e.clientY - handleCenterY);
+
+            if (dist < FEAR_RADIUS) {
+                runAway();
+            }
+        });
+
+        function runAway() {
+            const trackWidth = track.clientWidth;
+            const handleWidth = handle.clientWidth;
+            const maxLeft = trackWidth - handleWidth;
+
+            // Pick a random spot on the track
+            const randomLeft = Math.floor(Math.random() * maxLeft);
+            
+            handle.style.left = `${randomLeft}px`;
+            
+            // Calculate volume based on position
+            const volume = Math.round((randomLeft / maxLeft) * 100);
+            display.innerText = volume;
+        }
+    </script>
+</body>
+</html>
