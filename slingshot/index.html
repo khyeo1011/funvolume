@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Slingshot Volume</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #222; color: #fff; font-family: sans-serif; margin: 0; overflow: hidden; }
+        canvas { border: 2px solid #555; background: #333; cursor: crosshair; }
+        h1 { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Volume: <span id="vol">0</span>%</h1>
+    <canvas id="game" width="400" height="600"></canvas>
+    <p>Drag the puck down and release to fire.</p>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const volDisplay = document.getElementById('vol');
+
+        let puck = { x: 200, y: 500, r: 15, vx: 0, vy: 0, isDragging: false };
+        const anchor = { x: 200, y: 500 };
+        let volume = 0;
+
+        // Physics constants
+        const FRICTION = 0.98;
+        const ELASTICITY = 0.2;
+        const MAX_PULL = 100;
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Scale
+            ctx.fillStyle = '#555';
+            for(let i=0; i<=10; i++) {
+                let y = 50 + (i * 45);
+                ctx.fillRect(50, y, 300, 2);
+                ctx.fillText((100 - i*10) + "%", 20, y + 5);
+            }
+
+            // Physics
+            if (!puck.isDragging) {
+                puck.x += puck.vx;
+                puck.y += puck.vy;
+                puck.vx *= FRICTION;
+                puck.vy *= FRICTION;
+
+                // Bounce off top (Overshoot)
+                if (puck.y < 50) {
+                    puck.y = 50;
+                    puck.vy = -puck.vy * 0.6; // Bounce back
+                }
+                // Floor collision
+                if (puck.y > 600) {
+                    puck.y = 600;
+                    puck.vy = -puck.vy * 0.6; // Bounce back
+                }
+
+                if (puck.x < 0){
+                    puck.x = 0;
+                    puck.vx = - puck.vx * 0.6;
+                }
+
+                if (puck.x > 400){
+                    puck.x = 400;
+                    puck.vx = - puck.vx * 0.6;
+                }
+
+
+                // Calculate Volume based on height (50px is 100%, 500px is 0%)
+                let rawVol = Math.max(0, Math.min(100, (500 - puck.y) / 4.5));
+                volume = Math.round(rawVol);
+                volDisplay.innerText = volume;
+            }
+
+            // Draw Elastic
+            if (puck.isDragging) {
+                ctx.beginPath();
+                ctx.moveTo(anchor.x - 40, anchor.y);
+                ctx.lineTo(puck.x, puck.y);
+                ctx.lineTo(anchor.x + 40, anchor.y);
+                ctx.strokeStyle = '#f0932b';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+            }
+
+            // Draw Puck
+            ctx.beginPath();
+            ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI * 2);
+            ctx.fillStyle = '#eb4d4b';
+            ctx.fill();
+
+            requestAnimationFrame(update);
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            if (Math.hypot(mx - puck.x, my - puck.y) < puck.r * 2) {
+                puck.isDragging = true;
+                puck.vx = 0; 
+                puck.vy = 0;
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!puck.isDragging) return;
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+
+            const dx = mx - anchor.x;
+            const dy = my - anchor.y;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist > MAX_PULL) {
+                const ratio = MAX_PULL / dist;
+                puck.x = anchor.x + dx * ratio;
+                puck.y = Math.max(anchor.y + dy * ratio, anchor.y);
+            } else {
+                puck.x = mx;
+                puck.y = Math.max(my, anchor.y);
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (puck.isDragging) {
+                puck.isDragging = false;
+                puck.vy = (anchor.y - puck.y) * ELASTICITY; 
+                puck.vx = (anchor.x - puck.x) * ELASTICITY;
+            }
+        });
+
+        update();
+    </script>
+</body>
+</html>
