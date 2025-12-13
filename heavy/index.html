@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Heavy Fader</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #dcdde1; font-family: sans-serif; }
+        .track {
+            width: 60px; height: 400px; background: #2f3640; border-radius: 30px; position: relative;
+            box-shadow: inset 0 0 10px #000;
+        }
+        .handle {
+            width: 50px; height: 80px; background: #718093; border-radius: 10px;
+            position: absolute; left: 5px; bottom: 0; cursor: grab;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: bold;
+        }
+        .handle:active { cursor: grabbing; background: #7f8fa6; }
+        .lock-btn {
+            margin-left: 50px; padding: 20px; background: #e84118; color: white; border: none; border-radius: 50%;
+            font-weight: bold; cursor: pointer; box-shadow: 0 5px #c23616;
+        }
+        .lock-btn:active { transform: translateY(2px); box-shadow: 0 2px #c23616; }
+        .controls { display: flex; align-items: center; }
+        h1 { margin-bottom: 20px; color: #2f3640; }
+    </style>
+</head>
+<body>
+    <h1>Try to lock the volume of the falling slider!</h1>
+    <h1>Volume: <span id="vol">0</span>%</h1>
+    
+    <div class="controls">
+        <div class="track" id="track">
+            <div class="handle" id="handle">|||</div>
+        </div>
+        <button class="lock-btn" id="lock">LOCK</button>
+    </div>
+
+    <script>
+        const handle = document.getElementById('handle');
+        const track = document.getElementById('track');
+        const volDisplay = document.getElementById('vol');
+        const lockBtn = document.getElementById('lock');
+
+        let isDragging = false;
+        let isLocked = false;
+        let bottomPos = 0; // 0 to 320 (400 - 80)
+        let velocity = 0;
+        const GRAVITY = -0.5; // Falls down
+
+        handle.addEventListener('mousedown', () => {
+            if (isLocked){
+                return;
+            }
+            isDragging = true;
+            isLocked = false;
+            velocity = 0;
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const trackRect = track.getBoundingClientRect();
+                // Calculate position relative to bottom of track
+                let newBottom = trackRect.bottom - e.clientY - 40; // 40 is half handle height
+                bottomPos = Math.max(0, Math.min(320, newBottom));
+            }
+        });
+
+        lockBtn.addEventListener('click', () => {
+            if(isLocked){
+                isLocked = false;
+                lockBtn.style.background = "#e84118";
+                lockBtn.innerText = "LOCK";
+                return;
+            }
+            isLocked = true;
+            velocity = 0;
+            lockBtn.style.background = "#4cd137";
+            lockBtn.innerText = "LOCKED";
+        });
+
+        function loop() {
+            if (!isDragging && !isLocked) {
+                if (bottomPos > 0) {
+                    velocity += GRAVITY;
+                    bottomPos += velocity;
+                    if (bottomPos < 0) bottomPos = 0;
+                }
+            }
+
+            handle.style.bottom = bottomPos + 'px';
+            
+            let vol = Math.round((bottomPos / 320) * 100);
+            volDisplay.innerText = vol;
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</body>
+</html>
